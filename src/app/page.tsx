@@ -165,7 +165,7 @@ export default function Home() {
               </div>
               <div className="mt-8">
                 <Link
-                  href="/src/app/(auth)/admin/orders"
+                  href="/admin/orders"
                   className="inline-block bg-amber-600 hover:bg-amber-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
                 >
                   Staff Dashboard
