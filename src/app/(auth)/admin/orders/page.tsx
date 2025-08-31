@@ -2,27 +2,6 @@
 
 import { useEffect, useState } from 'react';
 
-interface OrderItem {
-  id: number;
-  productId: number;
-  quantity: number;
-  product: {
-    name: string;
-    price: number;
-  };
-}
-
-interface Order {
-  id: number;
-  tableId: number;
-  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELED';
-  createdAt: string;
-  table: {
-    number: number;
-  };
-  items: OrderItem[];
-}
-
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);

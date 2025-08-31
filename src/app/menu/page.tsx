@@ -2,29 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Image from 'next/image';
-
-interface Product {
-  id: number;
-  name: string;
-  description: string | null;
-  price: number;
-}
-
-interface Recommendation {
-  id: number;
-  productId: number;
-  product: Product;
-  reason: string;
-  score: number;
-}
-
-interface CartItem {
-  productId: number;
-  name: string;
-  price: number;
-  quantity: number;
-}
 
 export default function MenuPage() {
   const searchParams = useSearchParams();
@@ -37,8 +14,6 @@ export default function MenuPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orderStatus, setOrderStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [orderMessage, setOrderMessage] = useState<string | null>(null);
-  console.log("1",recommendations)
-  console.log("2",products)
   useEffect(() => {
     async function fetchData() {
       if (!tableId) {
