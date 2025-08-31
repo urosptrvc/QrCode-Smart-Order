@@ -47,7 +47,7 @@ const LoginPage = () => {
     setError(null);
 
     try {
-      const result = await apiPost("/api/(auth)/login", {
+      const result = await apiPost("/api/auth/login", {
         username: values.username,
         password: values.password,
       });
