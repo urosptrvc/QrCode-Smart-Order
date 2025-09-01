@@ -1,264 +1,313 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import {
+  Star,
+  Plus,
+  Minus,
+  Trash2,
+  ShoppingBag,
+  Clock,
+  Sparkles,
+} from "lucide-react";
+import { Button } from "@/src/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/src/components/ui/card";
+import { Badge } from "@/src/components/ui/badge";
+import { Separator } from "@/src/components/ui/separator";
+import { Alert, AlertDescription } from "@/src/components/ui/alert";
+import { useOptions } from "@/src/hooks/useOptions";
+import { useCart } from "@/src/hooks/useCart";
 
 export default function MenuPage() {
   const searchParams = useSearchParams();
-  const tableId = searchParams.get('table');
-  
-  const [products, setProducts] = useState<Product[]>([]);
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [orderStatus, setOrderStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const tableId = searchParams.get("table");
+  const { products, recommendations, loading, error } = useOptions(tableId);
+  const {
+    cart,
+    addToCart,
+    updateCartItemQuantity,
+    removeFromCart,
+    submitOrder,
+  } = useCart();
+  const [orderStatus, setOrderStatus] = useState<
+    "idle" | "submitting" | "success" | "error"
+  >("idle");
   const [orderMessage, setOrderMessage] = useState<string | null>(null);
-  useEffect(() => {
-    async function fetchData() {
-      if (!tableId) {
-        setError('Table ID is required');
-        setLoading(false);
-        return;
-      }
-      
-      try {
-        // Fetch menu products
-        const productsResponse = await fetch(`/api/products`);
-        if (!productsResponse.ok) throw new Error('Failed to fetch products');
-        const productsData = await productsResponse.json();
-        
-        // Fetch recommendations for this table
-        const recommendationsResponse = await fetch(`/api/recommendations?table=${tableId}`);
-        if (!recommendationsResponse.ok) throw new Error('Failed to fetch recommendations');
-        const recommendationsData = await recommendationsResponse.json();
-        
-        setProducts(productsData);
-        setRecommendations(recommendationsData);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setLoading(false);
-      }
+
+  const handleSubmitOrder = async () => {
+    try {
+      setOrderStatus("submitting");
+      setOrderMessage(null);
+      await submitOrder(cart);
+      setOrderStatus("success");
+      setOrderMessage("Your order has been placed successfully!");
+    } catch (error) {
+      setOrderStatus("error");
+      setOrderMessage("Failed to place order. Please try again.");
     }
-    
-    fetchData();
-  }, [tableId]);
-  
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-  
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          <p>{error}</p>
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent mx-auto"></div>
+          <p className="text-muted-foreground font-medium">
+            Loading your menu...
+          </p>
         </div>
       </div>
     );
   }
-  
+
+  if (error) throw error;
+
   if (!tableId) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded">
-          <p>No table ID provided. Please scan a valid QR code.</p>
-        </div>
+        <Alert className="max-w-md">
+          <Clock className="h-4 w-4" />
+          <AlertDescription className="text-center">
+            <div className="font-semibold mb-2">Table Not Found</div>
+            Please scan a valid QR code to access your table&#39;s menu.
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
-  
+
+  const cartTotal = cart.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0,
+  );
+  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold">Menu for Table {tableId}</h1>
-      </header>
-      
-      {recommendations.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-2xl font-semibold mb-4">Recommended for You</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {recommendations.map((rec) => (
-              <div key={rec.id} className="bg-amber-50 border border-amber-100 rounded-lg p-4 shadow-sm">
-                <h3 className="text-xl font-medium">{rec.product.name}</h3>
-                <p className="text-gray-600 mt-1">{rec.product.description}</p>
-                <div className="flex justify-between items-center mt-4">
-                  <span className="font-semibold">${rec.product.price}</span>
-                  <span className="text-sm text-amber-700">{rec.reason}</span>
-                </div>
-                <button 
-                  onClick={() => addToCart(rec.product)} 
-                  className="mt-3 w-full bg-amber-500 hover:bg-amber-600 text-white py-2 px-4 rounded transition-colors"
-              >
-                  Add to Order
-              </button>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-      
-      <section>
-        <h2 className="text-2xl font-semibold mb-4">All Drinks</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map((product) => (
-            <div key={product.id} className="bg-white border rounded-lg p-4 shadow-sm">
-              <h3 className="text-xl font-medium">{product.name}</h3>
-              <p className="text-gray-600 mt-1">{product.description}</p>
-              <div className="flex justify-between items-center mt-4">
-                <span className="font-semibold">${product.price}</span>
-              </div>
-              <button 
-                onClick={() => addToCart(product)} 
-                className="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded transition-colors"
-              >
-                Add to Order
-              </button>
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold tracking-tight">
+                Table {tableId}
+              </h1>
+              <p className="text-muted-foreground">Choose your perfect drink</p>
             </div>
-          ))}
-        </div>
-      </section>
-      
-      {/* Cart Section */}
-      {cart.length > 0 && (
-        <section className="mt-10 bg-gray-50 p-6 rounded-lg">
-          <h2 className="text-2xl font-semibold mb-4">Your Order</h2>
-          <div className="space-y-4">
-            {cart.map((item) => (
-              <div key={item.productId} className="flex justify-between items-center border-b pb-2">
-                <div>
-                  <span className="font-medium">{item.name}</span>
-                  <div className="flex items-center mt-1">
-                    <button 
-                      onClick={() => updateCartItemQuantity(item.productId, Math.max(1, item.quantity - 1))}
-                      className="bg-gray-200 px-2 rounded"
-                    >
-                      -
-                    </button>
-                    <span className="mx-2">{item.quantity}</span>
-                    <button 
-                      onClick={() => updateCartItemQuantity(item.productId, item.quantity + 1)}
-                      className="bg-gray-200 px-2 rounded"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div>${(item.price * item.quantity).toFixed(2)}</div>
-                  <button 
-                    onClick={() => removeFromCart(item.productId)}
-                    className="text-red-500 text-sm"
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-            
-            <div className="flex justify-between font-bold pt-2">
-              <span>Total:</span>
-              <span>${cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toFixed(2)}</span>
-            </div>
-            
-            <button 
-              onClick={submitOrder}
-              disabled={orderStatus === 'submitting'}
-              className={`mt-4 w-full py-3 rounded font-medium ${orderStatus === 'submitting' 
-                ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-green-600 hover:bg-green-700 text-white'}`}
-            >
-              {orderStatus === 'submitting' ? 'Placing Order...' : 'Place Order'}
-            </button>
-            
-            {orderMessage && (
-              <div className={`mt-4 p-3 rounded ${orderStatus === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                {orderMessage}
-              </div>
+            {cart.length > 0 && (
+              <Badge variant="secondary" className="gap-2 px-3 py-2">
+                <ShoppingBag className="h-4 w-4" />
+                {cartItemCount} items
+              </Badge>
             )}
           </div>
+        </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-8 space-y-12">
+        {recommendations.length > 0 && (
+          <section className="space-y-6">
+            <div className="flex items-center gap-3">
+              <Sparkles className="h-6 w-6 text-amber-500" />
+              <h2 className="text-2xl font-bold tracking-tight">
+                Recommended for You
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {recommendations.map((rec) => (
+                <Card
+                  key={rec.id}
+                  className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-amber-200 bg-gradient-to-br from-amber-50/50 to-orange-50/50"
+                >
+                  <CardHeader className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+                        <Star className="h-3 w-3 mr-1 fill-current" />
+                        Recommended
+                      </Badge>
+                    </div>
+                    <CardTitle className="text-xl text-balance">
+                      {rec.product.name}
+                    </CardTitle>
+                    <CardDescription className="text-pretty leading-relaxed min-h-[50px]">
+                      {rec.product.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4 min-h-[120px]">
+                    <div className="text-2xl font-bold">
+                      ${rec.product.price}
+                    </div>
+                    <Alert className="border-amber-200 bg-amber-50">
+                      <AlertDescription className="text-amber-800">
+                        <span className="font-medium">Why we recommend: </span>
+                        {rec.reason}
+                      </AlertDescription>
+                    </Alert>
+                  </CardContent>
+                  <CardFooter className="pt-0">
+                    <Button
+                      onClick={() => addToCart(rec.product)}
+                      className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
+                      size="lg"
+                    >
+                      Add to Order
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section className="space-y-6">
+          <h2 className="text-2xl font-bold tracking-tight">All Drinks</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {products.map((product) => (
+              <Card
+                key={product.id}
+                className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+              >
+                <CardHeader>
+                  <CardTitle className="text-xl text-balance">
+                    {product.name}
+                  </CardTitle>
+                  <CardDescription className="text-pretty leading-relaxed min-h-[50px]">
+                    {product.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 min-h-[120px]">
+                  <div className="text-2xl font-bold">${product.price}</div>
+                </CardContent>
+                <CardFooter className="pt-0">
+                  <Button
+                    onClick={() => addToCart(product)}
+                    className="w-full"
+                    size="lg"
+                  >
+                    Add to Order
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
         </section>
-      )}
+
+        {cart.length > 0 && (
+          <Card className="overflow-hidden">
+            <CardHeader className=" text-primary">
+              <CardTitle className="flex items-center gap-3">
+                <ShoppingBag className="h-6 w-6" />
+                Your Order
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-6">
+              {cart.map((item) => (
+                <div
+                  key={item.productId}
+                  className="flex items-center justify-between p-4 rounded-lg border bg-muted/30"
+                >
+                  <div className="flex-1 space-y-2">
+                    <h4 className="font-semibold">{item.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 bg-transparent"
+                        onClick={() =>
+                          updateCartItemQuantity(
+                            item.productId,
+                            Math.max(1, item.quantity - 1),
+                          )
+                        }
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="font-semibold min-w-[2rem] text-center">
+                        {item.quantity}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 bg-transparent"
+                        onClick={() =>
+                          updateCartItemQuantity(
+                            item.productId,
+                            item.quantity + 1,
+                          )
+                        }
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-xl font-bold">
+                      ${(item.price * item.quantity).toFixed(2)}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive bg-transparent"
+                      onClick={() => removeFromCart(item.productId)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+
+              <Separator />
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-xl font-bold">Total:</span>
+                  <span className="text-3xl font-bold text-primary">
+                    ${cartTotal.toFixed(2)}
+                  </span>
+                </div>
+
+                <Button
+                  onClick={handleSubmitOrder}
+                  disabled={orderStatus === "submitting"}
+                  className="w-full"
+                  size="lg"
+                >
+                  {orderStatus === "submitting"
+                    ? "Placing Order..."
+                    : "Place Order"}
+                </Button>
+
+                {orderMessage && (
+                  <Alert
+                    className={
+                      orderStatus === "success"
+                        ? "border-green-200 bg-green-50"
+                        : "border-destructive/50 bg-destructive/10"
+                    }
+                  >
+                    <AlertDescription
+                      className={
+                        orderStatus === "success"
+                          ? "text-green-800"
+                          : "text-destructive"
+                      }
+                    >
+                      {orderMessage}
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
-  
-  // Cart functions
-  function addToCart(product: Product) {
-    setCart(prevCart => {
-      // Check if product already in cart
-      const existingItem = prevCart.find(item => item.productId === product.id);
-      
-      if (existingItem) {
-        // Update quantity if already in cart
-        return prevCart.map(item => 
-          item.productId === product.id 
-            ? { ...item, quantity: item.quantity + 1 } 
-            : item
-        );
-      } else {
-        // Add new item to cart
-        return [...prevCart, {
-          productId: product.id,
-          name: product.name,
-          price: Number(product.price),
-          quantity: 1
-        }];
-      }
-    });
-  }
-  
-  function updateCartItemQuantity(productId: number, newQuantity: number) {
-    setCart(prevCart => 
-      prevCart.map(item => 
-        item.productId === productId 
-          ? { ...item, quantity: newQuantity } 
-          : item
-      )
-    );
-  }
-  
-  function removeFromCart(productId: number) {
-    setCart(prevCart => prevCart.filter(item => item.productId !== productId));
-  }
-  
-  async function submitOrder() {
-    if (!tableId || cart.length === 0) return;
-    
-    setOrderStatus('submitting');
-    setOrderMessage(null);
-    
-    try {
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tableId,
-          items: cart.map(item => ({
-            productId: item.productId,
-            quantity: item.quantity
-          }))
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to place order');
-      }
-      
-      setOrderStatus('success');
-      setOrderMessage('Order placed successfully! A waiter will be with you shortly.');
-      setCart([]);
-    } catch (err) {
-      setOrderStatus('error');
-      setOrderMessage(err instanceof Error ? err.message : 'An error occurred while placing your order');
-    }
-  }
 }

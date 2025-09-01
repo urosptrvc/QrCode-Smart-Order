@@ -1,4 +1,4 @@
-import { getSession } from "@/src/lib/signJWT";
+import { getSession } from "@/src/lib/session/signJWT";
 
 export const verifyToken = async (
   apiToken: string,

@@ -1,4 +1,4 @@
-import { getSession } from "@/src/lib/signJWT";
+import { getSession } from "@/src/lib/session/signJWT";
 import { redirect } from "next/navigation";
 
 export default async function AdminLayout({

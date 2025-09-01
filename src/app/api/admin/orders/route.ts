@@ -1,42 +1,23 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/src/lib/db';
+import { NextResponse } from "next/server";
+import { getAllOrders } from "@/src/services/Order";
+import { ValidateApiToken } from "@/src/lib/session/validateApiToken";
 
 export async function GET() {
   try {
-    const orders = await prisma.order.findMany({
-      include: {
-        table: {
-          select: {
-            number: true,
-          },
-        },
-        items: {
-          include: {
-            product: {
-              select: {
-                name: true,
-                price: true,
-              },
-            },
-          },
-        },
-      },
-      orderBy: [
-        {
-          status: 'asc', // PENDING first, then IN_PROGRESS, etc.
-        },
-        {
-          createdAt: 'desc', // Newest orders first within each status
-        },
-      ],
-    });
-
+    const userSession = await ValidateApiToken();
+    if (!userSession) {
+      return NextResponse.json(
+        { error: "Samo admin ima pristup" },
+        { status: 403 },
+      );
+    }
+    const orders = await getAllOrders();
     return NextResponse.json(orders);
   } catch (error) {
-    console.error('Error fetching orders:', error);
+    console.error("Error fetching orders:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch orders' },
-      { status: 500 }
+      { error: "Failed to fetch orders" },
+      { status: 500 },
     );
   }
 }

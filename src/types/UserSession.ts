@@ -1,6 +1,6 @@
 interface UserSession {
   id: string;
   name: string;
-  email: string;
+  username: string;
   exp: any;
 }
