@@ -24,19 +24,24 @@ import {useUserContext} from "@/src/context/UserContext";
 import {useRouter} from "next/navigation";
 
 export default function OrdersPage() {
-  const { orders, loading, error, updateOrderStatus } = useOrders();
   const router = useRouter();
-  const {user,loadingUser} = useUserContext()
-  if (loading || loadingUser) {
+  const {user,loadingUser,logout} = useUserContext()
+  if(!user && !loadingUser) router.push("/login")
+  const { orders, loading, error, updateOrderStatus } = useOrders();
+  if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
         <Loading size="lg" text="Please wait..." />
       </div>
     );
   }
-  if(!user) router.push("/login")
   if (error) throw new Error(`Failed to load orders,${error}`);
 
+  const handleLogout = async (e:any) => {
+    e.preventDefault()
+    await logout();
+    router.push("/login")
+  }
   return (
     <div className="min-h-screen bg-background">
       {/* Header Section */}
@@ -58,6 +63,9 @@ export default function OrdersPage() {
 
               <Button onClick={() => router.push("/admin")}>
                 Register User
+              </Button>
+              <Button variant="destructive" onClick={(e) => handleLogout(e)}>
+                Logout
               </Button>
             </div>
           </div>

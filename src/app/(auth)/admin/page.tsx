@@ -30,7 +30,14 @@ export default function RegisterPage() {
         formState: {errors},
         reset,
     } = useForm<RegisterFormValues>({resolver: zodResolver(regSchema), mode: "onChange"});
-    if (loadingUser) return <Loading/>
+    if (loadingUser) {
+        return (
+            <div className="h-screen flex items-center justify-center">
+                <Loading size="lg" text="Please wait..."/>
+            </div>
+        )
+    }
+    ;
     if (!user) router.push("/login");
     const passwordValue = watch("password") || "";
 

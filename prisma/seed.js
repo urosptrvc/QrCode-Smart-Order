@@ -23,7 +23,7 @@ async function main() {
     },
   });
 
-  console.log(`Created admin user with name: ${adminUser.username}`);
+  console.log(`Created admin user with username: ${adminUser.username} and password: admin123`);
 
   // Create tables
   const tables = await Promise.all(
