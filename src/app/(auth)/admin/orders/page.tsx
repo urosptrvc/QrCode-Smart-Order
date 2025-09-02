@@ -1,172 +1,223 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
+import { useOrders } from "@/src/hooks/useOrders";
+import { Loading } from "@/src/components/ui/loading";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/src/components/ui/card";
+import { Badge } from "@/src/components/ui/badge";
+import { Button } from "@/src/components/ui/button";
+import { Separator } from "@/src/components/ui/separator";
+import {
+  Clock,
+  Users,
+  DollarSign,
+  Package,
+  CheckCircle,
+  XCircle,
+  Play,
+} from "lucide-react";
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchOrders() {
-      try {
-        const response = await fetch('/api/admin/orders');
-        if (!response.ok) throw new Error('Failed to fetch orders');
-        const data = await response.json();
-        setOrders(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchOrders();
-    // Set up polling to refresh orders every 30 seconds
-    const interval = setInterval(fetchOrders, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  async function updateOrderStatus(orderId: number, status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELED') {
-    try {
-      const response = await fetch(`/api/admin/orders/${orderId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status }),
-      });
-
-      if (!response.ok) throw new Error('Failed to update order status');
-
-      // Update local state
-      setOrders(prevOrders =>
-        prevOrders.map(order =>
-          order.id === orderId ? { ...order, status } : order
-        )
-      );
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'An error occurred');
-    }
-  }
+  const { orders, loading, error, updateOrderStatus } = useOrders();
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="h-screen flex items-center justify-center">
+        <Loading size="lg" text="Please wait..." />
       </div>
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          <p>{error}</p>
-        </div>
-      </div>
-    );
-  }
+  if (error) throw new Error(`Failed to load orders,${error}`);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Order Management</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {orders.length === 0 ? (
-          <p className="col-span-full text-center text-gray-500">No orders found</p>
-        ) : (
-          orders.map((order) => (
-            <div
-              key={order.id}
-              className={`border rounded-lg p-4 shadow-sm ${
-                order.status === 'PENDING'
-                  ? 'bg-yellow-50 border-yellow-200'
-                  : order.status === 'IN_PROGRESS'
-                  ? 'bg-blue-50 border-blue-200'
-                  : order.status === 'COMPLETED'
-                  ? 'bg-green-50 border-green-200'
-                  : 'bg-red-50 border-red-200'
-              }`}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-semibold">
-                  Table {order.table.number}
-                </h3>
-                <span
-                  className={`px-2 py-1 rounded text-sm font-medium ${
-                    order.status === 'PENDING'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : order.status === 'IN_PROGRESS'
-                      ? 'bg-blue-100 text-blue-800'
-                      : order.status === 'COMPLETED'
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}
-                >
-                  {order.status}
-                </span>
-              </div>
-
-              <div className="mb-4">
-                <p className="text-sm text-gray-500">
-                  Order #{order.id} • {new Date(order.createdAt).toLocaleString()}
-                </p>
-              </div>
-
-              <div className="space-y-2 mb-4">
-                {order.items.map((item) => (
-                  <div key={item.id} className="flex justify-between">
-                    <span>
-                      {item.quantity}x {item.product.name}
-                    </span>
-                    <span>${(item.product.price * item.quantity)}</span>
-                  </div>
-                ))}
-                <div className="border-t pt-2 font-bold flex justify-between">
-                  <span>Total:</span>
-                  <span>
-                    $
-                    {order.items
-                      .reduce(
-                        (sum, item) => sum + item.product.price * item.quantity,
-                        0
-                      )
-                      .toFixed(2)}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {order.status === 'PENDING' && (
-                  <button
-                    onClick={() => updateOrderStatus(order.id, 'IN_PROGRESS')}
-                    className="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded text-sm"
-                  >
-                    Start Preparing
-                  </button>
-                )}
-                {order.status === 'IN_PROGRESS' && (
-                  <button
-                    onClick={() => updateOrderStatus(order.id, 'COMPLETED')}
-                    className="bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded text-sm"
-                  >
-                    Mark Completed
-                  </button>
-                )}
-                {(order.status === 'PENDING' || order.status === 'IN_PROGRESS') && (
-                  <button
-                    onClick={() => updateOrderStatus(order.id, 'CANCELED')}
-                    className="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded text-sm"
-                  >
-                    Cancel Order
-                  </button>
-                )}
-              </div>
+    <div className="min-h-screen bg-background">
+      {/* Header Section */}
+      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h1 className="text-3xl font-bold tracking-tight">
+                Order Management
+              </h1>
+              <p className="text-muted-foreground">Manage the orders</p>
             </div>
-          ))
-        )}
+            <div className="flex items-center gap-2">
+              <Package className="h-4 w-4" />
+              <span>{orders.length} Total Orders</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Orders Grid */}
+      <div className="container mx-auto px-4 py-8 space-y-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {orders.length === 0 ? (
+            <Card className="col-span-full">
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <Package className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No orders found</h3>
+                <p className="text-muted-foreground text-center">
+                  Orders will appear here when customers place them
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            orders.map((order) => (
+              <Card
+                key={order.id}
+                className="flex flex-col h-full min-h-[400px] overflow-hidden hover:shadow-lg transition-shadow"
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5 text-muted-foreground" />
+                      Table {order.table.number}
+                    </CardTitle>
+                    <Badge
+                      variant={getStatusVariant(order.status)}
+                      className="flex items-center gap-1"
+                    >
+                      {getStatusIcon(order.status)}
+                      {order.status.replace("_", " ")}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Order #{order.id}</span>
+                    <span>•</span>
+                    <span>{new Date(order.createdAt).toLocaleString()}</span>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="flex flex-col flex-1 justify-between space-y-4">
+                  {/* Order Items */}
+                  <div className="space-y-2">
+                    {order.items.map((item: any) => (
+                      <div
+                        key={item.id}
+                        className="flex justify-between items-center text-sm"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Badge
+                            variant="outline"
+                            className="text-xs px-1.5 py-0.5"
+                          >
+                            {item.quantity}x
+                          </Badge>
+                          {item.product.name}
+                        </span>
+                        <span className="font-medium">
+                          ${(item.product.price * item.quantity).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Footer deo: Total + Buttons */}
+                  <div className="mt-auto pt-4 space-y-4">
+                    <Separator />
+
+                    {/* Total */}
+                    <div className="flex justify-between items-center font-semibold">
+                      <span className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4" />
+                        Total:
+                      </span>
+                      <span className="text-lg">
+                        $
+                        {order.items
+                          .reduce(
+                            (sum: any, item: any) =>
+                              sum + item.product.price * item.quantity,
+                            0,
+                          )
+                          .toFixed(2)}
+                      </span>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap gap-2">
+                      {order.status === "PENDING" && (
+                        <Button
+                          onClick={() =>
+                            updateOrderStatus(order.id, "IN_PROGRESS")
+                          }
+                          className="flex-1 min-w-0"
+                          size="sm"
+                        >
+                          <Play className="h-3 w-3 mr-1" />
+                          Start Preparing
+                        </Button>
+                      )}
+                      {order.status === "IN_PROGRESS" && (
+                        <Button
+                          onClick={() =>
+                            updateOrderStatus(order.id, "COMPLETED")
+                          }
+                          className="flex-1 min-w-0"
+                          size="sm"
+                        >
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Mark Completed
+                        </Button>
+                      )}
+                      {(order.status === "PENDING" ||
+                        order.status === "IN_PROGRESS") && (
+                        <Button
+                          onClick={() =>
+                            updateOrderStatus(order.id, "CANCELED")
+                          }
+                          variant="destructive"
+                          size="sm"
+                          className="flex-shrink-0"
+                        >
+                          <XCircle className="h-3 w-3 mr-1" />
+                          Cancel
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
 }
+
+const getStatusVariant = (status: string) => {
+  switch (status) {
+    case "PENDING":
+      return "secondary";
+    case "IN_PROGRESS":
+      return "default";
+    case "COMPLETED":
+      return "default";
+    case "CANCELED":
+      return "destructive";
+    default:
+      return "secondary";
+  }
+};
+
+const getStatusIcon = (status: string) => {
+  switch (status) {
+    case "PENDING":
+      return <Clock className="h-3 w-3" />;
+    case "IN_PROGRESS":
+      return <Package className="h-3 w-3" />;
+    case "COMPLETED":
+      return <CheckCircle className="h-3 w-3" />;
+    case "CANCELED":
+      return <XCircle className="h-3 w-3" />;
+    default:
+      return <Clock className="h-3 w-3" />;
+  }
+};

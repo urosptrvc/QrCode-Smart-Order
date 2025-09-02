@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { hash } from "bcrypt";
 
 const prisma = new PrismaClient();
 
@@ -13,16 +14,16 @@ async function main() {
 
   console.log("Cleared existing data");
 
-  // Create admin user
+  const pass = await hash("admin123", 10);
   const adminUser = await prisma.user.create({
     data: {
       name: "Admin User",
-      email: "admin@mojaapp.com",
-      password: "admin123", // In a real application, this should be hashed
+      username: "admin",
+      password: pass,
     },
   });
 
-  console.log(`Created admin user with email: ${adminUser.email}`);
+  console.log(`Created admin user with name: ${adminUser.username}`);
 
   // Create tables
   const tables = await Promise.all(
@@ -46,6 +47,8 @@ async function main() {
         description:
           "Strong black coffee made by forcing steam through ground coffee beans",
         price: 2.5,
+        imageUrl:
+          "https://blogstudio.s3.theshoppad.net/coffeeheroau/ec178d83e5f597b162cda1e60cb64194.jpg",
       },
     }),
     prisma.product.create({
@@ -54,6 +57,8 @@ async function main() {
         description:
           "Coffee made with milk that has been frothed up with pressurized steam",
         price: 3.5,
+        imageUrl:
+          "https://www.livingnorth.com/images/media/articles/food-and-drink/eat-and-drink/coffee.png?fm=pjpg&w=1000&q=95",
       },
     }),
     prisma.product.create({
@@ -61,6 +66,8 @@ async function main() {
         name: "Latte",
         description: "Coffee made with espresso and steamed milk",
         price: 3.75,
+        imageUrl:
+          "https://images.unsplash.com/photo-1541167760496-1628856ab772",
       },
     }),
     prisma.product.create({
@@ -68,6 +75,8 @@ async function main() {
         name: "Americano",
         description: "Espresso with added hot water",
         price: 2.75,
+        imageUrl:
+          "https://images.unsplash.com/photo-1669872484166-e11b9638b50e?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8YW1lcmljYW5vJTIwY29mZmVlfGVufDB8fDB8fHww",
       },
     }),
     prisma.product.create({
@@ -75,6 +84,8 @@ async function main() {
         name: "Mocha",
         description: "Espresso with steamed milk and chocolate",
         price: 4.0,
+        imageUrl:
+          "https://ichef.bbci.co.uk/food/ic/food_16x9_1600/recipes/the_perfect_mocha_coffee_29100_16x9.jpg",
       },
     }),
     prisma.product.create({
@@ -82,6 +93,8 @@ async function main() {
         name: "Fresh Orange Juice",
         description: "Freshly squeezed orange juice",
         price: 3.5,
+        imageUrl:
+          "https://www.floridacitrus.org/wp-content/uploads/2025/02/BG-OJ-1024x503.webp",
       },
     }),
     prisma.product.create({
@@ -89,6 +102,8 @@ async function main() {
         name: "Iced Tea",
         description: "Chilled tea with ice and lemon",
         price: 2.5,
+        imageUrl:
+          "https://realfood.tesco.com/media/images/RFO-1400x919-IcedTea-8e156836-69f4-4433-8bae-c42e174212c1-0-1400x919.jpg",
       },
     }),
     prisma.product.create({
@@ -96,6 +111,8 @@ async function main() {
         name: "Sparkling Water",
         description: "Carbonated mineral water",
         price: 2.0,
+        imageUrl:
+          "https://crushmag-online.com/wp-content/uploads/2024/03/Sparkling-Water_S.Pellegrino_1x65.jpg",
       },
     }),
   ]);
@@ -149,7 +166,7 @@ async function main() {
   console.log(`Created ${recommendations.length} recommendations`);
 
   // Create a sample order
-  const order = await prisma.order.create({
+  await prisma.order.create({
     data: {
       tableId: tables[0].id,
       status: "COMPLETED",

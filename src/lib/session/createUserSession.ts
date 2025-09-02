@@ -1,3 +1,5 @@
+import { UserSession } from "@/src/types/UserSession";
+
 export const createUserSession = (user: any): UserSession => {
   const currentUnix = Math.floor(Date.now() / 1000);
   const exp = currentUnix + 30 * 24 * 60 * 60;

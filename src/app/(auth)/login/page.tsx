@@ -60,6 +60,7 @@ const LoginPage = () => {
       }
     } catch (e) {
       setError("Došlo je do greške. Pokušajte ponovo.");
+      console.error(e);
     } finally {
       setIsLoading(false);
     }

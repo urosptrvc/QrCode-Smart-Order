@@ -1,5 +1,6 @@
 import { decodeJwt, SignJWT } from "jose";
 import { cookies } from "next/headers";
+import { UserSession } from "@/src/types/UserSession";
 
 export const signToken = async (userSession: UserSession) => {
   const secretKey = new TextEncoder().encode(process.env.API_AUTH_TOKEN_SECRET);

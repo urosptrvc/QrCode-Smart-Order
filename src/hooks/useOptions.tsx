@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useApi } from "@/src/hooks/useApi";
+import { RecommendationType } from "@/src/types/RecommendationType";
+import { ProductType } from "@/src/types/ProductType";
 
 export function useOptions(tableId: any) {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductType[]>([]);
   const [recommendedProducts, setRecommendedProducts] = useState<
-    Recommendation[]
+    RecommendationType[]
   >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { useApi } from "@/src/hooks/useApi";
+import { toast } from "sonner";
+import { CartItemType } from "@/src/types/CartItemType";
+import { ProductType } from "@/src/types/ProductType";
 
 export function useCart() {
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<CartItemType[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(false);
   const { apiPost } = useApi();
 
-  function addToCart(product: Product) {
+  function addToCart(product: ProductType) {
     setCart((prevCart) => {
       // Check if product already in cart
       const existingItem = prevCart.find(
@@ -51,24 +54,16 @@ export function useCart() {
       prevCart.filter((item) => item.productId !== productId),
     );
   }
-//        body: JSON.stringify({
-//           tableId,
-//           items: cart.map((item) => ({
-//             productId: item.productId,
-//             quantity: item.quantity,
-//           })),
-//         }),
+
   async function submitOrder(payload: any) {
     setLoading(true);
-    setError(null);
+    setError(false);
     try {
-      const req = await apiPost("/api/orders", payload);
-      const res = await req.json();
-      if (!req.ok) {
-        throw new Error(res.error || "Failed to place order");
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      await apiPost("/api/orders", payload);
+      toast.success("Order placed successfully!");
+    } catch (err: any) {
+      toast.error("Failed to place order. Please try again.");
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -79,8 +74,9 @@ export function useCart() {
     updateCartItemQuantity,
     removeFromCart,
     submitOrder,
+    setCart,
     cart,
-    loading,
-    error,
+    cartLoading: loading,
+    cartError: error,
   };
 }
