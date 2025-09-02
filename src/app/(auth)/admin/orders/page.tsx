@@ -20,18 +20,21 @@ import {
   XCircle,
   Play,
 } from "lucide-react";
+import {useUserContext} from "@/src/context/UserContext";
+import {useRouter} from "next/navigation";
 
 export default function OrdersPage() {
   const { orders, loading, error, updateOrderStatus } = useOrders();
-
-  if (loading) {
+  const router = useRouter();
+  const {user,loadingUser} = useUserContext()
+  if (loading || loadingUser) {
     return (
       <div className="h-screen flex items-center justify-center">
         <Loading size="lg" text="Please wait..." />
       </div>
     );
   }
-
+  if(!user) router.push("/login")
   if (error) throw new Error(`Failed to load orders,${error}`);
 
   return (
@@ -46,13 +49,21 @@ export default function OrdersPage() {
               </h1>
               <p className="text-muted-foreground">Manage the orders</p>
             </div>
-            <div className="flex items-center gap-2">
-              <Package className="h-4 w-4" />
-              <span>{orders.length} Total Orders</span>
+
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                <span>{orders.length} Total Orders</span>
+              </div>
+
+              <Button onClick={() => router.push("/admin")}>
+                Register User
+              </Button>
             </div>
           </div>
         </div>
       </header>
+
 
       {/* Orders Grid */}
       <div className="container mx-auto px-4 py-8 space-y-12">

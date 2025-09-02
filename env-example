@@ -1,0 +1,4 @@
+DATABASE_URL="mysql://root:root@db:3306/qrcode"
+NEXT_PUBLIC_AUTH_TOKEN="CoffeAdmin"
+API_AUTH_TOKEN_SECRET="sLkzPjZoqTClq8MNq5F8D3Bjy+YoFZP/2oXfHv5nZGA="
+NEXT_PUBLIC_URL="http://localhost:3000"

@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
+
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     const isMatch = await compare(password, getUser.password);

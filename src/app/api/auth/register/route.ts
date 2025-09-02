@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     }
     const body = await req.json();
     const { username, password, name } = body;
-
+    console.log(username, password, name);
     if (!username || !password) {
       return NextResponse.json(
         { error: "Korisničko ime i lozinka su obavezni." },
