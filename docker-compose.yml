@@ -3,7 +3,7 @@ services:
     image: node:24
     container_name: coffee_qr_app
     working_dir: /src/app
-    command: sh -c "npm install && npx prisma db push && npm run seed && npm run dev"
+    command: sh -c "npm install && npx prisma db push && npm run seed && npm run build && npm run start"
     volumes:
       - ./:/src/app
     ports:
