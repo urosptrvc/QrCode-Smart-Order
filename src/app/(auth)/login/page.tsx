@@ -1,153 +1,153 @@
 "use client";
 
-import {useState} from "react";
-import {useRouter} from "next/navigation";
-import {useForm} from "react-hook-form";
-import {zodResolver} from "@hookform/resolvers/zod";
-import {useUserContext} from "@/src/context/UserContext";
-import {useApi} from "@/src/hooks/useApi";
-import {Button} from "@/src/components/ui/button";
-import {Input} from "@/src/components/ui/input";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useUserContext } from "@/src/context/UserContext";
+import { useApi } from "@/src/hooks/useApi";
+import { Button } from "@/src/components/ui/button";
+import { Input } from "@/src/components/ui/input";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/src/components/ui/card";
 import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
 } from "@/src/components/ui/form";
-import {Alert, AlertDescription} from "@/src/components/ui/alert";
-import {Loader2, User, Lock, Coffee} from "lucide-react";
-import {LoginFormValues, loginSchema} from "@/src/lib/validation";
+import { Alert, AlertDescription } from "@/src/components/ui/alert";
+import { Loader2, User, Lock, Coffee } from "lucide-react";
+import { LoginFormValues, loginSchema } from "@/src/lib/validation";
 
 const LoginPage = () => {
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const {apiPost} = useApi();
-    const {login} = useUserContext();
-    const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { apiPost } = useApi();
+  const { login } = useUserContext();
+  const router = useRouter();
 
-    const form = useForm<LoginFormValues>({
-        resolver: zodResolver(loginSchema),
-        defaultValues: {
-            username: "",
-            password: "",
-        },
-    });
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+    },
+  });
 
-    const handleLogin = async (values: LoginFormValues) => {
-        setIsLoading(true);
-        setError(null);
+  const handleLogin = async (values: LoginFormValues) => {
+    setIsLoading(true);
+    setError(null);
 
-        try {
-            const result = await apiPost("/api/auth/login", {
-                username: values.username,
-                password: values.password,
-            });
-            await login(result.user, result.token);
-            router.push("/admin/orders");
-        } catch (e) {
-            setError("Error occured");
-            console.error(e);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    try {
+      const result = await apiPost("/api/auth/login", {
+        username: values.username,
+        password: values.password,
+      });
+      await login(result.user, result.token);
+      router.push("/admin/orders");
+    } catch (e) {
+      setError("Error occured");
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-            <Card className="w-full max-w-md shadow-lg">
-                <CardHeader className="space-y-1 text-center">
-                    <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
-                        <Coffee className="h-6 w-6"/>
-                        Caffe Panel
-                    </CardTitle>
-                    <CardDescription>Log into your account</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Form {...form}>
-                        <form
-                            onSubmit={form.handleSubmit(handleLogin)}
-                            className="space-y-4"
-                        >
-                            {error && (
-                                <Alert variant="destructive">
-                                    <AlertDescription>{error}</AlertDescription>
-                                </Alert>
-                            )}
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-2xl font-bold flex items-center justify-center gap-2">
+            <Coffee className="h-6 w-6" />
+            Caffe Panel
+          </CardTitle>
+          <CardDescription>Log into your account</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(handleLogin)}
+              className="space-y-4"
+            >
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
-                            <FormField
-                                control={form.control}
-                                name="username"
-                                render={({field}) => (
-                                    <FormItem>
-                                        <FormLabel className="flex items-center gap-2">
-                                            <User className="h-4 w-4"/>
-                                            Username
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                placeholder="user123"
-                                                {...field}
-                                                disabled={isLoading}
-                                                className="h-11"
-                                            />
-                                        </FormControl>
-                                        <FormMessage/>
-                                    </FormItem>
-                                )}
-                            />
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Username
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="user123"
+                        {...field}
+                        disabled={isLoading}
+                        className="h-11"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                            <FormField
-                                control={form.control}
-                                name="password"
-                                render={({field}) => (
-                                    <FormItem>
-                                        <FormLabel className="flex items-center gap-2">
-                                            <Lock className="h-4 w-4"/>
-                                            Password
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="password"
-                                                placeholder="StrongPw123"
-                                                {...field}
-                                                disabled={isLoading}
-                                                className="h-11"
-                                            />
-                                        </FormControl>
-                                        <FormMessage/>
-                                    </FormItem>
-                                )}
-                            />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <Lock className="h-4 w-4" />
+                      Password
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="StrongPw123"
+                        {...field}
+                        disabled={isLoading}
+                        className="h-11"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                            <Button
-                                type="submit"
-                                className="w-full h-11 mt-6"
-                                disabled={isLoading}
-                            >
-                                {isLoading ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                                        Login...
-                                    </>
-                                ) : (
-                                    "Log in"
-                                )}
-                            </Button>
-                        </form>
-                    </Form>
-                </CardContent>
-            </Card>
-        </div>
-    );
+              <Button
+                type="submit"
+                className="w-full h-11 mt-6"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Login...
+                  </>
+                ) : (
+                  "Log in"
+                )}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </div>
+  );
 };
 
 export default LoginPage;
